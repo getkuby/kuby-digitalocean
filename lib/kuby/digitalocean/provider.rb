@@ -4,77 +4,65 @@ require 'fileutils'
 
 module Kuby
   module DigitalOcean
-    class Provider
+    class Provider < ::Kuby::Kubernetes::Provider
       KUBECONFIG_EXPIRATION = 7.days
-      INGRESS_NGINX_VERSION = '0.27.1'.freeze
 
-      INGRESS_SETUP_RESOURCES = [
-        "https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-#{INGRESS_NGINX_VERSION}/deploy/static/mandatory.yaml",
-        "https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-#{INGRESS_NGINX_VERSION}/deploy/static/provider/cloud-generic.yaml"
-      ].freeze
-
-      attr_reader :definition, :config
-
-      def initialize(definition)
-        @definition = definition
-        @config = Config.new
-      end
+      attr_reader :config
 
       def configure(&block)
         config.instance_eval(&block)
       end
 
-      def setup
-        Kuby.logger.info(ColorizedString['Starting setup...'].yellow)
-        setup_nginx_ingress
-        Kuby.logger.info(ColorizedString['Setup complete!'].yellow)
-      rescue => e
-        puts ColorizedString['Setup failed'].red
-      end
-
-      def deploy
-        deployer.deploy
-      end
-
-      def kubernetes_cli
-        @kubernetes_cli ||= Kuby::Kubernetes::CLI.new(kubeconfig_path).tap do |cli|
-          cli.before_execute do
-            FileUtils.mkdir_p(kubeconfig_dir)
-            refresh_kubeconfig
-          end
-        end
-      end
-
       def kubeconfig_path
         @kubeconfig_path ||= kubeconfig_dir.join(
           "#{definition.app_name.downcase}-kubeconfig.yaml"
-        )
+        ).to_s
+      end
+
+      def after_setup
+        if definition.kubernetes.plugins.include?(:nginx_ingress)
+          nginx_ingress = definition.kubernetes.plugin(:nginx_ingress)
+
+          service = ::KubeDSL::Resource.new(
+            kubernetes_cli.get_object(
+              'service', nginx_ingress.namespace, nginx_ingress.service_name
+            )
+          )
+
+          # Convert from Local to Cluster here so a DigitalOcean load balancer,
+          # which sits in front of the ingress controller, is accessible by pods
+          # running on the same node as the controller. We have to do this
+          # because of a k8s bug:
+          #
+          # https://github.com/kubernetes/kubernetes/issues/87263
+          # https://github.com/kubernetes/kubernetes/issues/66607
+          #
+          # Word on the street is this is fixed in v1.17 (DO is currently on 1.16).
+          # Hopefully we can rip this out in the near future.
+          #
+          # This was discovered because cert-manager's self-check step attempts to
+          # verify external access to its ACME challenge ingress/service, but times
+          # out because k8s' iptables rules prevent it from going through the DO
+          # load balancer and therefore nginx.
+          service.contents['spec']['externalTrafficPolicy'] = 'Cluster'
+          kubernetes_cli.apply(service)
+        end
       end
 
       private
 
-      def setup_nginx_ingress
-        Kuby.logger.info(ColorizedString['Deploying nginx ingress resources'].yellow)
+      def after_initialize
+        @config = Config.new
 
-        INGRESS_SETUP_RESOURCES.each do |uri|
-          kubernetes_cli.apply_uri(uri)
+        kubernetes_cli.before_execute do
+          FileUtils.mkdir_p(kubeconfig_dir)
+          refresh_kubeconfig
         end
-
-        Kuby.logger.info(ColorizedString['Nginx ingress resources deployed!'].yellow)
-      rescue => e
-        Kuby.logger.fatal(ColorizedString[e.message].red)
-        raise
       end
 
       def client
         @client ||= DropletKit::Client.new(
           access_token: config.access_token
-        )
-      end
-
-      def deployer
-        @deployer ||= Kuby::Kubernetes::Deployer.new(
-          definition.kubernetes.resources, kubernetes_cli
         )
       end
 

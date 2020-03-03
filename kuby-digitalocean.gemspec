@@ -14,6 +14,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'kuby', '~> 1.0'
   s.add_dependency 'droplet_kit', '~> 3.5'
+  s.add_dependency 'kube-dsl', '~> 1.0'
 
   s.require_path = 'lib'
   s.files = Dir['{lib,spec}/**/*', 'Gemfile', 'CHANGELOG.md', 'README.md', 'Rakefile', 'kuby-digitalocean.gemspec']
