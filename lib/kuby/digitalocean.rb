@@ -1,4 +1,3 @@
-require 'kuby'
 require 'kuby/digitalocean/provider'
 
 module Kuby

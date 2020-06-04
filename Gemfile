@@ -2,9 +2,8 @@ source 'https://rubygems.org'
 
 gemspec
 
-gem 'kuby', path: '../kuby'
-
 group :development, :test do
+  gem 'kuby', path: '../kuby'
   gem 'pry-byebug'
   gem 'rake'
 end

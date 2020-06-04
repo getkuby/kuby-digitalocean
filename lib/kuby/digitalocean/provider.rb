@@ -1,11 +1,12 @@
-require 'colorized_string'
+require 'kuby'
 require 'droplet_kit'
 require 'fileutils'
 
 module Kuby
   module DigitalOcean
     class Provider < ::Kuby::Kubernetes::Provider
-      KUBECONFIG_EXPIRATION = 7.days
+      KUBECONFIG_EXPIRATION = 7 * 24 * 60 * 60  # 7 days
+      STORAGE_CLASS_NAME = 'do-block-storage'.freeze
 
       attr_reader :config
 
@@ -19,10 +20,15 @@ module Kuby
         ).to_s
       end
 
-      def after_setup
-        if definition.kubernetes.plugins.include?(:nginx_ingress)
-          nginx_ingress = definition.kubernetes.plugin(:nginx_ingress)
+      def after_initialize
+        kubernetes_cli.before_execute do
+          FileUtils.mkdir_p(kubeconfig_dir)
+          refresh_kubeconfig
+        end
+      end
 
+      def after_setup
+        if nginx_ingress = definition.kubernetes.plugin(:nginx_ingress)
           service = ::KubeDSL::Resource.new(
             kubernetes_cli.get_object(
               'service', nginx_ingress.namespace, nginx_ingress.service_name
@@ -49,15 +55,14 @@ module Kuby
         end
       end
 
+      def storage_class_name
+        STORAGE_CLASS_NAME
+      end
+
       private
 
       def after_initialize
         @config = Config.new
-
-        kubernetes_cli.before_execute do
-          FileUtils.mkdir_p(kubeconfig_dir)
-          refresh_kubeconfig
-        end
       end
 
       def client
@@ -68,10 +73,10 @@ module Kuby
 
       def refresh_kubeconfig
         return unless should_refresh_kubeconfig?
-        Kuby.logger.info(ColorizedString['Refreshing kubeconfig...'].yellow)
+        Kuby.logger.info('Refreshing kubeconfig...')
         kubeconfig = client.kubernetes_clusters.kubeconfig(id: config.cluster_id)
         File.write(kubeconfig_path, kubeconfig)
-        Kuby.logger.info(ColorizedString['Successfully refreshed kubeconfig!'].yellow)
+        Kuby.logger.info('Successfully refreshed kubeconfig!')
       end
 
       def should_refresh_kubeconfig?
