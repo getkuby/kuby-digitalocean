@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 gemspec
 
 group :development, :test do
-  gem 'kuby', path: '../kuby'
+  gem 'kuby-core', path: '../kuby-core'
   gem 'pry-byebug'
   gem 'rake'
 end
