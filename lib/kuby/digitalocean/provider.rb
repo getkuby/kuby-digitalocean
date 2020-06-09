@@ -20,13 +20,6 @@ module Kuby
         ).to_s
       end
 
-      def after_initialize
-        kubernetes_cli.before_execute do
-          FileUtils.mkdir_p(kubeconfig_dir)
-          refresh_kubeconfig
-        end
-      end
-
       def after_setup
         if nginx_ingress = definition.kubernetes.plugin(:nginx_ingress)
           service = ::KubeDSL::Resource.new(
@@ -55,6 +48,10 @@ module Kuby
         end
       end
 
+      def after_configuration
+        refresh_kubeconfig
+      end
+
       def storage_class_name
         STORAGE_CLASS_NAME
       end
@@ -73,6 +70,7 @@ module Kuby
 
       def refresh_kubeconfig
         return unless should_refresh_kubeconfig?
+        FileUtils.mkdir_p(kubeconfig_dir)
         Kuby.logger.info('Refreshing kubeconfig...')
         kubeconfig = client.kubernetes_clusters.kubeconfig(id: config.cluster_id)
         File.write(kubeconfig_path, kubeconfig)
