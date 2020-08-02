@@ -1,6 +1,7 @@
 require 'kuby'
 require 'droplet_kit'
 require 'fileutils'
+require 'tmpdir'
 
 module Kuby
   module DigitalOcean
@@ -15,9 +16,9 @@ module Kuby
       end
 
       def kubeconfig_path
-        @kubeconfig_path ||= kubeconfig_dir.join(
-          "#{definition.app_name.downcase}-kubeconfig.yaml"
-        ).to_s
+        @kubeconfig_path ||= File.join(
+          kubeconfig_dir, "#{definition.app_name.downcase}-kubeconfig.yaml"
+        )
       end
 
       def after_setup
@@ -48,8 +49,10 @@ module Kuby
         end
       end
 
-      def after_configuration
-        refresh_kubeconfig
+      def after_initialize
+        kubernetes_cli.before_execute do
+          refresh_kubeconfig
+        end
       end
 
       def storage_class_name
@@ -83,8 +86,8 @@ module Kuby
       end
 
       def kubeconfig_dir
-        @kubeconfig_dir ||= definition.app.root.join(
-          'tmp', 'kuby-digitalocean'
+        @kubeconfig_dir ||= File.join(
+          Dir.tmpdir, 'kuby-digitalocean'
         )
       end
     end
