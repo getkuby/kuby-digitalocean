@@ -21,6 +21,10 @@ module Kuby
         )
       end
 
+      def before_setup
+        refresh_kubeconfig
+      end
+
       def after_setup
         if nginx_ingress = definition.kubernetes.plugin(:nginx_ingress)
           service = ::KubeDSL::Resource.new(
@@ -47,6 +51,10 @@ module Kuby
           service.contents['spec']['externalTrafficPolicy'] = 'Cluster'
           kubernetes_cli.apply(service)
         end
+      end
+
+      def before_deploy(*)
+        refresh_kubeconfig
       end
 
       def after_initialize
