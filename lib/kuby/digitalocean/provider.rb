@@ -17,7 +17,7 @@ module Kuby
 
       def kubeconfig_path
         @kubeconfig_path ||= File.join(
-          kubeconfig_dir, "#{definition.app_name.downcase}-kubeconfig.yaml"
+          kubeconfig_dir, "#{environment.app_name.downcase}-kubeconfig.yaml"
         )
       end
 
@@ -26,7 +26,7 @@ module Kuby
       end
 
       def after_setup
-        if nginx_ingress = definition.kubernetes.plugin(:nginx_ingress)
+        if nginx_ingress = environment.kubernetes.plugin(:nginx_ingress)
           service = ::KubeDSL::Resource.new(
             kubernetes_cli.get_object(
               'service', nginx_ingress.namespace, nginx_ingress.service_name

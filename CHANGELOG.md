@@ -1,3 +1,6 @@
+## 0.4.0
+* Accept `environment` instead of `definition` instances.
+
 ## 0.3.0
 * Refresh kubeconfig in more places.
   - Before setup
