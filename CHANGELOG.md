@@ -1,3 +1,6 @@
+## 0.4.1
+* Fix bug causing kubeconfig to not get refreshed prior to executing commands.
+
 ## 0.4.0
 * Accept `environment` instead of `definition` instances.
 

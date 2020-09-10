@@ -57,12 +57,6 @@ module Kuby
         refresh_kubeconfig
       end
 
-      def after_initialize
-        kubernetes_cli.before_execute do
-          refresh_kubeconfig
-        end
-      end
-
       def storage_class_name
         STORAGE_CLASS_NAME
       end
@@ -71,6 +65,10 @@ module Kuby
 
       def after_initialize
         @config = Config.new
+
+        kubernetes_cli.before_execute do
+          refresh_kubeconfig
+        end
       end
 
       def client
