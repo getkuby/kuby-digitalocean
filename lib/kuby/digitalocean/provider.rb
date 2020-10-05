@@ -12,7 +12,7 @@ module Kuby
       attr_reader :config
 
       def configure(&block)
-        config.instance_eval(&block)
+        config.instance_eval(&block) if block
       end
 
       def kubeconfig_path

@@ -1,3 +1,6 @@
+## 0.4.2
+* Avoid `instance_eval`ing a `nil` block during configuration.
+
 ## 0.4.1
 * Fix bug causing kubeconfig to not get refreshed prior to executing commands.
 
