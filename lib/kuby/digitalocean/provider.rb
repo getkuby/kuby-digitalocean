@@ -16,7 +16,7 @@ module Kuby
       end
 
       def kubeconfig_path
-        @kubeconfig_path ||= File.join(
+        File.join(
           kubeconfig_dir,
           "#{environment.app_name.downcase}" \
           "-#{generate_hash(config.access_token + config.cluster_id)}" \
