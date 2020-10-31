@@ -2,6 +2,7 @@ require 'kuby'
 require 'droplet_kit'
 require 'fileutils'
 require 'tmpdir'
+require 'digest'
 
 module Kuby
   module DigitalOcean
@@ -98,6 +99,10 @@ module Kuby
         @kubeconfig_dir ||= File.join(
           Dir.tmpdir, 'kuby-digitalocean'
         )
+      end
+
+      def generate_hash(data)
+        Digest::SHA1.hexdigest(data)
       end
     end
   end
