@@ -20,8 +20,8 @@ module Kuby
         File.join(
           kubeconfig_dir,
           "#{environment.app_name.downcase}" \
-          "-#{generate_hash(config.access_token + config.cluster_id)}" \
-          "-kubeconfig.yaml"
+          "-#{generate_hash(config.access_token, config.cluster_id)}" \
+          '-kubeconfig.yaml'
         )
       end
 
@@ -101,8 +101,9 @@ module Kuby
         )
       end
 
-      def generate_hash(data)
-        Digest::SHA1.hexdigest(data)
+      def generate_hash(*args)
+        to_encode = args.join('_')
+        Digest::SHA1.hexdigest(to_encode)
       end
     end
   end
