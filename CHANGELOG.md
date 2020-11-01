@@ -1,3 +1,6 @@
+## 0.4.3
+* Add a unique hash of the configuration options to the kubeconfig path (#3, @pandwoter)
+
 ## 0.4.2
 * Avoid `instance_eval`ing a `nil` block during configuration.
 

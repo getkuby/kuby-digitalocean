@@ -19,9 +19,7 @@ module Kuby
       def kubeconfig_path
         File.join(
           kubeconfig_dir,
-          "#{environment.app_name.downcase}" \
-          "-#{generate_hash(config.access_token, config.cluster_id)}" \
-          '-kubeconfig.yaml'
+          "#{environment.app_name.downcase}-#{config.hash_value}-kubeconfig.yaml"
         )
       end
 
@@ -65,14 +63,18 @@ module Kuby
         STORAGE_CLASS_NAME
       end
 
+      def kubernetes_cli
+        @kubernetes_cli ||= ::KubernetesCLI.new(kubeconfig_path).tap do |cli|
+          cli.before_execute do
+            refresh_kubeconfig
+          end
+        end
+      end
+
       private
 
       def after_initialize
         @config = Config.new
-
-        kubernetes_cli.before_execute do
-          refresh_kubeconfig
-        end
       end
 
       def client
@@ -99,11 +101,6 @@ module Kuby
         @kubeconfig_dir ||= File.join(
           Dir.tmpdir, 'kuby-digitalocean'
         )
-      end
-
-      def generate_hash(*args)
-        to_encode = args.join('_')
-        Digest::SHA1.hexdigest(to_encode)
       end
     end
   end
