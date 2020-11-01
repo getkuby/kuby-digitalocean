@@ -2,6 +2,7 @@ require 'kuby'
 require 'droplet_kit'
 require 'fileutils'
 require 'tmpdir'
+require 'digest'
 
 module Kuby
   module DigitalOcean
@@ -16,8 +17,11 @@ module Kuby
       end
 
       def kubeconfig_path
-        @kubeconfig_path ||= File.join(
-          kubeconfig_dir, "#{environment.app_name.downcase}-kubeconfig.yaml"
+        File.join(
+          kubeconfig_dir,
+          "#{environment.app_name.downcase}" \
+          "-#{generate_hash(config.access_token, config.cluster_id)}" \
+          '-kubeconfig.yaml'
         )
       end
 
@@ -95,6 +99,11 @@ module Kuby
         @kubeconfig_dir ||= File.join(
           Dir.tmpdir, 'kuby-digitalocean'
         )
+      end
+
+      def generate_hash(*args)
+        to_encode = args.join('_')
+        Digest::SHA1.hexdigest(to_encode)
       end
     end
   end
